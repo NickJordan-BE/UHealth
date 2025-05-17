@@ -9,3 +9,9 @@ pyvenv.cfg
 /images
 *.csv
 /chest_xray
+
+firebase-cred.json
+.hack-env
+.env
+google-cred.json
+notes.md
