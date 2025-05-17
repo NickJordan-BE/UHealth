@@ -6,21 +6,11 @@ import matplotlib.pyplot as plt
 
 # Set constants
 IMG_SIZE = (224, 224)  
-BATCH_SIZE = 16
-EPOCHS = 1
+BATCH_SIZE = 32
+EPOCHS = 5
 
 # Set paths
 train_dir = "chest_xray/train"
-
-# Data generator with data augmentation
-# train_datagen = ImageDataGenerator(
-#     rescale=1./255,
-#     validation_split=0.2,
-#     horizontal_flip=True,
-#     zoom_range=0.2,
-#     shear_range=0.1,
-#     rotation_range=10
-# )
 
 train_datagen = ImageDataGenerator(
     rescale=1./255,
@@ -101,3 +91,5 @@ plt.legend()
 plt.title("Loss")
 
 plt.show()
+
+model.save("pneumonia_model.h5")
