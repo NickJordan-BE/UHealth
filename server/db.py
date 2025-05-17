@@ -40,7 +40,7 @@ class db:
             """CREATE TABLE IF NOT EXISTS images(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 patient_id INTEGER,
-                image_id TEXT UNIQUE NOT NULL,
+                path TEXT UNIQUE NOT NULL,
                 image_name TEXT NOT NULL,
                 FOREIGN KEY (patient_id) REFERENCES patient(id) ON UPDATE CASCADE ON DELETE SET NULL
                 )""")

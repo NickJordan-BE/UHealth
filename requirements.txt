@@ -5,5 +5,10 @@ flask-cors
 python-dotenv
 requests
 tensorflow
+firebase-admin
+google-api-python-client 
+google-auth-httplib2 
+google-auth-oauthlib
+boto3
 pandas
 matplotlib

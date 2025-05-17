@@ -10,3 +10,4 @@ firebase-cred.json
 .env
 google-cred.json
 notes.md
+server/__pycache__/**
