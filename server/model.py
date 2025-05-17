@@ -3,7 +3,7 @@ import tensorflow as tf
 import os
 import matplotlib.pyplot as plt
 from keras.api.models import Sequential
-from keras.api.layers import Conv2D, MaxPooling2D, Dense, Flatten, BatchNormalization, Dropout
+from keras.api.layers import Conv2D, MaxPooling2D, Dense, Flatten, BatchNormalization, Dropout, Input
 
 # Constants
 IMG_SIZE = (256, 256)
@@ -18,6 +18,9 @@ image_dir = "images/"
 df = pd.read_csv(csv_path)
 df = df[["Image Index", "Finding Labels"]]
 df["Image Index"] = df["Image Index"].apply(lambda x: os.path.join(image_dir, x))
+
+# first 1000 images
+df = df.iloc[:1000]
 
 all_labels = [
     "Atelectasis", "Cardiomegaly", "Effusion", "Infiltration", "Mass", "Nodule",
@@ -63,7 +66,9 @@ test_ds = test_ds.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
 # Model definition
 model = Sequential([
-    Conv2D(32, (3, 3), activation='relu', input_shape=(*IMG_SIZE, 3)),
+    Input(shape=(*IMG_SIZE, 3)),
+
+    Conv2D(32, (3, 3), activation='relu'),
     BatchNormalization(),
     MaxPooling2D(2, 2),
 
