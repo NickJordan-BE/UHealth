@@ -120,7 +120,7 @@ def setup(app):
 
 
 def predict(path):
-        model = load_model("../pneumonia_model.h5")
+        model = load_model("../health_cnn_model.h5")
         img = image.load_img(path, target_size=(224, 224)) 
 
         # Load and preprocess image
@@ -130,7 +130,13 @@ def predict(path):
 
         # Predict
         prediction = model.predict(img_array)[0][0]
-        label = "PNEUMONIA detected" if prediction > 0.5 else "Normal"
+        print(prediction)
+        label = ""
+
+        if prediction > .0000112:
+            label = "PNEUMONIA detected" 
+        else:
+            label = "No Finding"
 
         return label
 

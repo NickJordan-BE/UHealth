@@ -20,9 +20,9 @@ df = df[["Image Index", "Finding Labels"]]
 df["Image Index"] = df["Image Index"].apply(lambda x: os.path.join(image_dir, x))
 
 # first 1000 images
-df = df.iloc[:23000]
+df = df.iloc[:10000]
 
-selected_labels = ["Atelectasis", "Cardiomegaly", "Effusion", "Pneumonia", "Hernia"]
+selected_labels = ["Pneumonia", "No Finding"]
 
 def has_only_selected_labels(label_str):
     label_list = label_str.split('|')
@@ -86,8 +86,8 @@ model = Sequential([
 
     Flatten(),
     Dense(224, activation='relu'),
-    Dropout(0.5),
-    Dense(5, activation='sigmoid')
+    Dropout(0.75),
+    Dense(2, activation='sigmoid')
 ])
 
 model.compile(optimizer='adam',
@@ -98,7 +98,7 @@ model.compile(optimizer='adam',
 history = model.fit(
     train_ds,
     validation_data=test_ds,
-    epochs=50
+    epochs=1
 )
 
 # evaluate on test dataset
