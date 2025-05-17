@@ -62,7 +62,7 @@ if uploaded_file is not None and patient_name.strip() != "":
         }
 
         try:
-            response = requests.post("http://localhost:5000/api/upload", data=data, files=files)
+            response = requests.post("http://127.0.0.1:5000/api/upload", data=data, files=files)
             response.raise_for_status()  # Raises an error for 4xx/5xx responses
 
             result = response.json()
