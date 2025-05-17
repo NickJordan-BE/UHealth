@@ -1,1 +1,7 @@
 hack-env
+bin/
+etc/
+include/
+lib/
+share/
+pyenv.cfg
