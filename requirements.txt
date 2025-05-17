@@ -1,0 +1,8 @@
+Flask
+cors
+streamlit
+flask-cors
+python-dotenv
+requests
+tensorflow
+
