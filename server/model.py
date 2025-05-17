@@ -6,8 +6,8 @@ from keras.api.models import Sequential
 from keras.api.layers import Conv2D, MaxPooling2D, Dense, Flatten, BatchNormalization, Dropout, Input
 
 # Constants
-IMG_SIZE = (256, 256)
-BATCH_SIZE = 256
+IMG_SIZE = (224, 224)
+BATCH_SIZE = 4
 TEST_SPLIT = 0.2  # 20% test data
 
 # Paths
@@ -20,17 +20,19 @@ df = df[["Image Index", "Finding Labels"]]
 df["Image Index"] = df["Image Index"].apply(lambda x: os.path.join(image_dir, x))
 
 # first 1000 images
-df = df.iloc[:1000]
+df = df.iloc[:23000]
 
-all_labels = [
-    "Atelectasis", "Cardiomegaly", "Effusion", "Infiltration", "Mass", "Nodule",
-    "Pneumonia", "Pneumothorax", "Consolidation", "Edema", "Emphysema", "Fibrosis",
-    "Pleural_Thickening", "Hernia"
-]
+selected_labels = ["Atelectasis", "Cardiomegaly", "Effusion", "Pneumonia", "Hernia"]
+
+def has_only_selected_labels(label_str):
+    label_list = label_str.split('|')
+    return all(label in selected_labels for label in label_list)
+
+df = df[df["Finding Labels"].apply(lambda s: all(l in selected_labels for l in s.split('|')))]
 
 def encode_labels(label_str):
     label_list = label_str.split('|')
-    one_hot = [1 if label in label_list else 0 for label in all_labels]
+    one_hot = [1 if label in label_list else 0 for label in selected_labels]
     return one_hot
 
 df["encoded_labels"] = df["Finding Labels"].apply(encode_labels)
@@ -55,6 +57,8 @@ def process_image(file_path, label):
     image = tf.io.read_file(file_path)
     image = tf.image.decode_png(image, channels=3)
     image = tf.image.resize(image, IMG_SIZE)
+    image = tf.image.random_flip_left_right(image)
+    image = tf.image.random_brightness(image, max_delta=0.1)
     image = image / 255.0  # normalize to [0,1]
     return image, label
 
@@ -69,28 +73,32 @@ model = Sequential([
     Input(shape=(*IMG_SIZE, 3)),
 
     Conv2D(32, (3, 3), activation='relu'),
-    BatchNormalization(),
     MaxPooling2D(2, 2),
 
     Conv2D(64, (3, 3), activation='relu'),
-    BatchNormalization(),
+    MaxPooling2D(2, 2),
+
+    Conv2D(128, (3, 3), activation='relu'),
+    MaxPooling2D(2, 2),
+
+    Conv2D(256, (3, 3), activation='relu'),
     MaxPooling2D(2, 2),
 
     Flatten(),
-    Dense(256, activation='relu'),
+    Dense(224, activation='relu'),
     Dropout(0.5),
-    Dense(14, activation='softmax')
+    Dense(5, activation='sigmoid')
 ])
 
 model.compile(optimizer='adam',
-              loss='categorical_crossentropy',
+              loss='binary_crossentropy',
               metrics=['accuracy'])
 
 # train the model
 history = model.fit(
     train_ds,
     validation_data=test_ds,
-    epochs=1
+    epochs=50
 )
 
 # evaluate on test dataset
@@ -113,3 +121,5 @@ plt.legend()
 plt.title('Loss')
 
 plt.show()
+
+model.save("health_cnn_model.h5")
