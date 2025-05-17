@@ -94,9 +94,11 @@ def setup(app):
         try:
             db = Database()
             cursor = db.get_cursor()
-            patient_id = cursor.execute('SELECT id FROM patients WHERE name = ?', [data.form['name']])
-            cursor.execute('INSERT INTO (patient_id, path, image_name) VALUES (?, ?, ?, ?)', [patient_id, blob_path, file.filename])
+            # patient_id = cursor.execute('SELECT id FROM patients WHERE name = ?', [data.form['name']])
+            cursor.execute('INSERT INTO images (patient_id, path, image_name) VALUES (?, ?, ?)', [1, blob_path, file.filename])
+            db.get_connection().commit()
         except sqlite3.Error as er:
+            print(er)
             abort(500, description=er)
         
         return jsonify({

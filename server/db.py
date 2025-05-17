@@ -48,6 +48,24 @@ class Database:
                 FOREIGN KEY (patient_id) REFERENCES patient(id) ON UPDATE CASCADE ON DELETE SET NULL
             )""")
 
+
+        # Insert dummy doctors if table is empty
+        self.cursor.execute("SELECT COUNT(*) FROM doctor")
+        if self.cursor.fetchone()[0] == 0:
+            dummy_doctors = ['Dr. House', 'Dr. Strange', 'Dr. Who', 'Dr. Watson', 'Dr. Doom']
+            for name in dummy_doctors:
+                self.cursor.execute("INSERT INTO doctor (name) VALUES (?)", (name,))
+
+        # Insert dummy patients if table is empty
+        self.cursor.execute("SELECT COUNT(*) FROM patient")
+        if self.cursor.fetchone()[0] == 0:
+            # Assign each patient to a different doctor (1-5)
+            dummy_patients = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve']
+            for i, name in enumerate(dummy_patients):
+                doctor_id = i + 1  # Assuming IDs autoincrement from 1
+                self.cursor.execute("INSERT INTO patient (name, doctor_id) VALUES (?, ?)", (name, doctor_id))
+
+
         self.connection.commit()
 
     def close(self):
