@@ -7,11 +7,11 @@ from keras.api.layers import Conv2D, MaxPooling2D, Dense, Flatten, BatchNormaliz
 
 # Constants
 IMG_SIZE = (256, 256)
-BATCH_SIZE = 32
+BATCH_SIZE = 256
 TEST_SPLIT = 0.2  # 20% test data
 
 # Paths
-csv_path = "Data_Entry_2017.csv"
+csv_path = "Data_Entry_2017_v2020.csv"
 image_dir = "images/"
 
 # Load CSV and preprocess labels
@@ -85,7 +85,7 @@ model.compile(optimizer='adam',
 history = model.fit(
     train_ds,
     validation_data=test_ds,
-    epochs=3
+    epochs=1
 )
 
 # evaluate on test dataset
