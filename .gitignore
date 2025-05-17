@@ -4,4 +4,4 @@ etc/
 include/
 lib/
 share/
-pyenv.cfg
+pyvenv.cfg
