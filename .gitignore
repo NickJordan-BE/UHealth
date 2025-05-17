@@ -5,3 +5,6 @@ include/
 lib/
 share/
 pyvenv.cfg
+
+/images
+Data_Entry_2017_v2020.csv
