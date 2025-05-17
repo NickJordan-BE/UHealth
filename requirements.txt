@@ -5,4 +5,5 @@ flask-cors
 python-dotenv
 requests
 tensorflow
-
+pandas
+matplotlib
