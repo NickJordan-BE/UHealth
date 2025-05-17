@@ -1,5 +1,6 @@
 import streamlit as st
 from PIL import Image
+import requests
 
 # Landing Page
 st.markdown(
@@ -51,7 +52,25 @@ if uploaded_file is not None and patient_name.strip() != "":
 
     st.markdown("### Diagnosis:")
     # Replace this section with your ML model diagnosis
-    st.success(f"Preliminary findings for {patient_name}: Something something likely detected. Recommend clinical correlation.")
+    if st.button("Submit to Backend"):
+        # Build the POST request
+        files = {
+            'file': (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)
+        }
+        data = {
+            'name': patient_name
+        }
+
+        try:
+            response = requests.post("http://localhost:5000/api/upload", data=data, files=files)
+            response.raise_for_status()  # Raises an error for 4xx/5xx responses
+
+            result = response.json()
+            st.success(f"Upload successful: {result.get('message')}")
+            st.code(result.get('path'), language='bash')
+
+        except requests.exceptions.RequestException as e:
+            st.error(f"Upload failed: {e}")
 elif uploaded_file is not None and patient_name.strip() == "":
     st.warning("Please enter the patient's name.")
 else:

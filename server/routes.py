@@ -26,6 +26,7 @@ def setup(app):
         username = data.form['username']
         if username == None:
             abort(400)
+        db = Database()
         cursor = db.get_cursor()
         try:
             cursor.execute('INSERT INTO doctor (name, username) VALUES (?, ?)', [name, username])
@@ -41,6 +42,8 @@ def setup(app):
         username = data.form['username']
         if username ==  None:
             abort(400)
+        
+        db = Database()
         cursor = db.get_cursor()
         cursor.execute('')
     
@@ -67,12 +70,13 @@ def setup(app):
         blob = bucket.blob(blob_path)
         blob.upload_from_filename(file, content_type=file.content_type)
         
-        try:
-            cursor = db.get_cursor()
-            patient_id = cursor.execute('SELECT id FROM patients WHERE name = ?', [data.form['name']])
-            cursor.execute('INSERT INTO (patient_id, path, image_name) VALUES (?, ?, ?, ?)', [patient_id, blob_path, file.filename])
-        except sqlite3.Error as er:
-            abort(500, description=er)
+        # try:
+        #     db = Database()
+        #     cursor = db.get_cursor()
+        #     patient_id = cursor.execute('SELECT id FROM patients WHERE name = ?', [data.form['name']])
+        #     cursor.execute('INSERT INTO (patient_id, path, image_name) VALUES (?, ?, ?, ?)', [patient_id, blob_path, file.filename])
+        # except sqlite3.Error as er:
+        #     abort(500, description=er)
         
         return 200, 'success'
 
