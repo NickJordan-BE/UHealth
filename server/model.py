@@ -7,11 +7,11 @@ from keras.api.layers import Conv2D, MaxPooling2D, Dense, Flatten, BatchNormaliz
 
 # Constants
 IMG_SIZE = (256, 256)
-BATCH_SIZE = 256
+BATCH_SIZE = 16
 TEST_SPLIT = 0.2  # 20% test data
 
 # Paths
-csv_path = "Data_Entry_2017_v2020.csv"
+csv_path = "4999.csv"
 image_dir = "images/"
 
 # Load CSV and preprocess labels
@@ -20,7 +20,7 @@ df = df[["Image Index", "Finding Labels"]]
 df["Image Index"] = df["Image Index"].apply(lambda x: os.path.join(image_dir, x))
 
 # first 1000 images
-df = df.iloc[:1000]
+df = df.iloc[:2000]
 
 all_labels = [
     "Atelectasis", "Cardiomegaly", "Effusion", "Infiltration", "Mass", "Nodule",
@@ -51,16 +51,43 @@ test_labels = labels[-test_size:]
 train_ds = tf.data.Dataset.from_tensor_slices((train_paths, train_labels))
 test_ds = tf.data.Dataset.from_tensor_slices((test_paths, test_labels))
 
+# def process_image(file_path, label):
+#     image = tf.io.read_file(file_path)
+#     image = tf.image.decode_png(image, channels=3)
+#     image = tf.image.resize(image, IMG_SIZE)
+#     image = image / 255.0  # normalize to [0,1]
+#     return image, label
+
+# def process_image(file_path, label):
+#     image = tf.io.read_file(file_path)
+#     image = tf.image.decode_png(image, channels=3)
+#     image = tf.image.resize(image, IMG_SIZE)
+#     image = tf.image.random_flip_left_right(image)
+#     image = tf.image.random_brightness(image, max_delta=0.1)
+#     image = image / 255.0
+#     # image = image / 1024.0
+#     return image, label
+
 def process_image(file_path, label):
     image = tf.io.read_file(file_path)
-    image = tf.image.decode_png(image, channels=3)
+    image = tf.image.decode_png(image, channels=3, dtype=tf.uint8) 
     image = tf.image.resize(image, IMG_SIZE)
-    image = image / 255.0  # normalize to [0,1]
+    image = tf.image.random_flip_left_right(image)
+    image = tf.image.random_brightness(image, max_delta=0.1)
+    image = tf.cast(image, tf.float32) / 255.0 
     return image, label
 
-train_ds = train_ds.map(process_image, num_parallel_calls=tf.data.AUTOTUNE)
-train_ds = train_ds.shuffle(buffer_size=1000).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+# train_ds = train_ds.map(process_image, num_parallel_calls=tf.data.AUTOTUNE)
+# train_ds = train_ds.shuffle(buffer_size=1000).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
+# test_ds = test_ds.map(process_image, num_parallel_calls=tf.data.AUTOTUNE)
+# test_ds = test_ds.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+
+train_ds = tf.data.Dataset.from_tensor_slices((train_paths, train_labels))
+train_ds = train_ds.map(process_image, num_parallel_calls=tf.data.AUTOTUNE)
+train_ds = train_ds.shuffle(1000).batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
+
+test_ds = tf.data.Dataset.from_tensor_slices((test_paths, test_labels))
 test_ds = test_ds.map(process_image, num_parallel_calls=tf.data.AUTOTUNE)
 test_ds = test_ds.batch(BATCH_SIZE).prefetch(tf.data.AUTOTUNE)
 
@@ -77,13 +104,14 @@ model = Sequential([
     MaxPooling2D(2, 2),
 
     Flatten(),
-    Dense(256, activation='relu'),
+    # Dense(256, activation='relu'),
+    Dense(512, activation='relu'),
     Dropout(0.5),
     Dense(14, activation='softmax')
 ])
 
 model.compile(optimizer='adam',
-              loss='categorical_crossentropy',
+              loss='binary_crossentropy',
               metrics=['accuracy'])
 
 # train the model
