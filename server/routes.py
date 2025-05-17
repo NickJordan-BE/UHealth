@@ -8,12 +8,20 @@ import re
 import firebase_admin
 import uuid
 from firebase_admin import credentials, storage
+from keras.api.models import load_model
+from keras.api.preprocessing import image
+import numpy as np
+import os
+
 
 def setup(app):
     cred = credentials.Certificate('../firebase-cred.json')
     firebase_admin.initialize_app(cred, {
         'storageBucket': 'uhealth-56bbb.firebasestorage.app' 
     })
+
+    # Load your trained model
+    model = load_model("pneumonia_model.h5")
 
     @app.route('/', methods=['GET'])
     def hello():
@@ -106,7 +114,28 @@ def setup(app):
             'path': blob_path,
         })
 
-        
+
+    def predict():
+        if 'file' not in request.files:
+            return jsonify({"error": "No file provided"}), 400
+
+        file = request.files['file']
+        filepath = "temp.jpg"
+        file.save(filepath)
+
+        # Load and preprocess image
+        img = image.load_img(filepath, target_size=(224, 224))  # match your training input
+        img_array = image.img_to_array(img) / 255.0
+        img_array = np.expand_dims(img_array, axis=0)
+
+        # Predict
+        prediction = model.predict(img_array)[0][0]
+        label = "PNEUMONIA detected" if prediction > 0.5 else "Normal"
+
+        os.remove(filepath)  # Clean up temp image
+
+        return jsonify({"prediction": label, "confidence": float(prediction)})
+
 
     # @app.route('/api/get-images')
     # @app.route('/api/get-doctor')
