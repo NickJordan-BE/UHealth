@@ -1,10 +1,11 @@
 from flask import Flask
 from routes import setup
-from db import db
+from db import Database
 
 app = Flask(__name__)
 setup(app)
-db.connect_db()
+db = Database()
+
 
 
 

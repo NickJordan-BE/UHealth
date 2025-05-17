@@ -1,18 +1,21 @@
 import sqlite3
+import threading
 
-class db:
+class Database:
     _instance = None
+    _lock = threading.Lock()
 
     def __new__(cls):
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
-                    cls._instance = super(db, cls).__new__(cls)
+                    cls._instance = super(Database, cls).__new__(cls)
+                    cls._instance._connect_db()
                     cls._instance._init_db()
         return cls._instance
 
-    def connect_db(self):
-        self.connection = sqlite3.connect('database.db')
+    def _connect_db(self):
+        self.connection = sqlite3.connect('database.db', check_same_thread=False)
         self.cursor = self.connection.cursor()
 
     def get_connection(self):
@@ -21,12 +24,12 @@ class db:
     def get_cursor(self):
         return self.cursor
 
-    def __init_db(self):
+    def _init_db(self):
         self.cursor.execute(
             """CREATE TABLE IF NOT EXISTS doctor(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL
-                )""")
+            )""")
 
         self.cursor.execute(
             """CREATE TABLE IF NOT EXISTS patient(
@@ -34,7 +37,7 @@ class db:
                 name TEXT NOT NULL,
                 doctor_id INTEGER,
                 FOREIGN KEY (doctor_id) REFERENCES doctor(id) ON UPDATE CASCADE ON DELETE SET NULL
-                )""")
+            )""")
 
         self.cursor.execute(
             """CREATE TABLE IF NOT EXISTS images(
@@ -43,9 +46,10 @@ class db:
                 path TEXT UNIQUE NOT NULL,
                 image_name TEXT NOT NULL,
                 FOREIGN KEY (patient_id) REFERENCES patient(id) ON UPDATE CASCADE ON DELETE SET NULL
-                )""")
+            )""")
 
+        self.connection.commit()
 
     def close(self):
         self.connection.close()
-        db._instance = None
+        Database._instance = None
