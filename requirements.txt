@@ -5,6 +5,8 @@ flask-cors
 python-dotenv
 requests
 tensorflow
+pandas
+matplotlib
 firebase-admin
 google-api-python-client 
 google-auth-httplib2 
