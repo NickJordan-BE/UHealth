@@ -62,12 +62,14 @@ if uploaded_file is not None and patient_name.strip() != "":
         }
 
         try:
-            response = requests.post("http://127.0.0.1:5000/api/upload", data=data, files=files)
+            response = requests.post("http://127.0.0.1:5000/predict", data=data, files=files)
             response.raise_for_status()  # Raises an error for 4xx/5xx responses
 
+
+
             result = response.json()
-            st.success(f"Upload successful: {result.get('message')}")
-            st.code(result.get('path'), language='bash')
+            st.success(f"Upload successful")
+            st.write(result.get('prediction'))
 
         except requests.exceptions.RequestException as e:
             st.error(f"Upload failed: {e}")

@@ -14,20 +14,18 @@ import numpy as np
 import os
 from PIL import Image as PILImage
 
-model = load_model("../pneumonia_model.h5")
+def setup(app):
+    cred = credentials.Certificate('../firebase-cred.json')
+    firebase_admin.initialize_app(cred, {
+        'storageBucket': 'uhealth-56bbb.firebasestorage.app' 
+    })
 
-# def setup(app):
-#     cred = credentials.Certificate('../firebase-cred.json')
-#     firebase_admin.initialize_app(cred, {
-#         'storageBucket': 'uhealth-56bbb.firebasestorage.app' 
-#     })
-
-#     # Load your trained model
+    # Load your trained model
 
 
-#     @app.route('/', methods=['GET'])
-#     def hello():
-#         return 'UHEALTH'
+    @app.route('/', methods=['GET'])
+    def hello():
+        return 'UHEALTH'
 
     @app.route('/api/register', methods=['POST'])
     def register():
@@ -99,7 +97,7 @@ model = load_model("../pneumonia_model.h5")
         blob.upload_from_filename(tmp_path, content_type=file.content_type)
         blob.make_public()
 
-        os.remove(tmp_path)
+
 
         try:
             db = Database()
@@ -107,6 +105,10 @@ model = load_model("../pneumonia_model.h5")
             # patient_id = cursor.execute('SELECT id FROM patients WHERE name = ?', [data.form['name']])
             cursor.execute('INSERT INTO images (patient_id, path, image_name) VALUES (?, ?, ?)', [1, blob_path, file.filename])
             db.get_connection().commit()
+
+            return jsonify({
+                'result': predict(tmp_path)
+            })
         except sqlite3.Error as er:
             print(er)
             abort(500, description=er)
@@ -117,41 +119,20 @@ model = load_model("../pneumonia_model.h5")
         })
 
 
-def predict():
-    if 'file' not in request.files:
-        return jsonify({"error": "No file provided"}), 400
-    
-
-    file = request.files['file']
-    filepath = "temp.jpeg"
-    file.save(filepath)
-
-    try:
-        file.stream.seek(0)
-        # Load image directly from memory
-        pil_img = PILImage.open(file.stream).convert("RGB")
-        pil_img = pil_img.resize((224, 224))
-
-        # Convert to array
-        img_array = image.img_to_array(pil_img) / 255.0
-        img_array = np.expand_dims(img_array, axis=0)
-
+def predict(path):
+        model = load_model("../pneumonia_model.h5")
+        img = image.load_img(path, target_size=(224, 224)) 
 
         # Load and preprocess image
         # img = image.load_img("/Users/njordan/Desktop/PersonalProject/UWTHackathon/server/temp.jpeg", target_size=(224, 224))  # match your training input
-        img_array = image.img_to_array(pil_img) / 255.0
+        img_array = image.img_to_array(img) / 255.0
         img_array = np.expand_dims(img_array, axis=0)
 
         # Predict
         prediction = model.predict(img_array)[0][0]
         label = "PNEUMONIA detected" if prediction > 0.5 else "Normal"
 
-        os.remove(filepath)  # Clean up temp image
-
-        return jsonify({"prediction": label, "confidence": float(prediction)})
-    except Exception as e:
-        print(e)
-
+        return label
 
     # @app.route('/api/get-images')
     # @app.route('/api/get-doctor')
