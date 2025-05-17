@@ -5,10 +5,7 @@ import matplotlib.pyplot as plt
 from keras.api.models import Sequential
 from keras.api.layers import Conv2D, MaxPooling2D, Dense, Flatten, BatchNormalization, Dropout, Input
 
-<<<<<<< HEAD
 # Constants
-=======
->>>>>>> 83f816e (stash)
 IMG_SIZE = (256, 256)
 BATCH_SIZE = 256
 TEST_SPLIT = 0.2  # 20% test data
