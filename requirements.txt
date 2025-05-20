@@ -11,3 +11,11 @@ google-auth-httplib2
 google-auth-oauthlib
 pandas
 matplotlib
+firebase-admin
+google-api-python-client 
+google-auth-httplib2 
+google-auth-oauthlib
+boto3
+openai
+pandas
+matplotlib
