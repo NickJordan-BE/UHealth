@@ -1,18 +1,16 @@
+import tempfile
+from db import Database
 from flask import request, jsonify, abort
+import sqlite3
+import firebase_admin
+import uuid
 from firebase_admin import credentials, storage
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 from dotenv import load_dotenv
 import db.db2
 import numpy as np
-import firebase_admin
-import os
-import tempfile
-import sqlite3
-import uuid
-import json
 
-load_dotenv()
 
 def setup(app):
     firebase_id = json.loads(
@@ -257,10 +255,11 @@ def predict(path):
 
         # Predict
         prediction = model.predict(img_array)
+        prediction = model.predict(img_array)
         label = ""
 
-        if prediction[1] > prediction[0]:
-            label = "Pneumonia detected" 
+        if prediction[0] > prediction[1]:
+            label = "PNEUMONIA detected" 
         else:
             label = "No findings"
 
