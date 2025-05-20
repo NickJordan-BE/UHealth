@@ -5,3 +5,16 @@ include/
 lib/
 share/
 pyvenv.cfg
+
+firebase-cred.json
+.hack-env
+.env
+google-cred.json
+notes.md
+notes.md
+server/__pycache__/**
+server/database.db
+
+/images
+Data_Entry_2017_v2020.csv
+../pneumonia_model.h5
