@@ -5,6 +5,7 @@ include/
 lib/
 share/
 pyvenv.cfg
+
 firebase-cred.json
 .hack-env
 .env
