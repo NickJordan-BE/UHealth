@@ -1,3 +1,31 @@
+<<<<<<< HEAD
+from db import db
+from flask import Flask, request, jsonify, abort, Response
+import sqlite3
+import re
+import os
+# import firebase_admin
+# from firebase_admin import credentials
+from googleapiclient.discovery import build, MediaFileUpload, HttpError
+from google.oauth2 import service_account
+
+
+def setup(app):
+    # cred = credentials.Certificate("../firebase-cred.json")
+    # firebase_admin.initialize_app(cred)
+    creds = service_account.Credentials.from_service_account_file(
+    '../google-cred.json',
+    scopes=['https://www.googleapis.com/auth/drive']
+    )
+    service = build('drive', 'v3', credentials=creds)
+
+
+    @app.route('/')
+    def hello():
+        return 'UHEALTH'
+
+    @app.route('/api/register', methods="POST")
+=======
 import tempfile
 import firebase_admin.storage
 from db import Database
@@ -28,6 +56,7 @@ def setup(app):
         return 'UHEALTH'
 
     @app.route('/api/register', methods=['POST'])
+>>>>>>> 56ef03b054e28f84c6d7d26306f4a1c4e262e822
     def register():
         data = request.get_json()
         name = data.form['name']
@@ -36,6 +65,15 @@ def setup(app):
         username = data.form['username']
         if username == None:
             abort(400)
+<<<<<<< HEAD
+        cursor = db.get_cursor()
+        try:
+            cursor.execute('INSERT INTO doctor (name, username) VALUES (?, ?)', [name, username])
+        except sqlite3.Error as er:
+            abort(500, description=er)
+        
+    @app.route('/api/login', methods="POST")
+=======
         try:
             db = Database()
             cursor = db.get_cursor()
@@ -45,6 +83,7 @@ def setup(app):
         return 200
         
     @app.route('/api/login', methods=['POST'])
+>>>>>>> 56ef03b054e28f84c6d7d26306f4a1c4e262e822
     def login():
         data = request.get_json()
         name = data.form['name']
@@ -53,6 +92,20 @@ def setup(app):
         username = data.form['username']
         if username ==  None:
             abort(400)
+<<<<<<< HEAD
+        cursor = db.get_cursor()
+        cursor.execute('')
+    
+    @app.route('/api/logout', methods="POST")
+    def logout():
+        return "Success", 200
+    
+
+        
+    @app.route('/api/upload', method="POST")
+    def upload():
+        data = request.get_json()
+=======
         
         try:
             db = Database()
@@ -72,10 +125,45 @@ def setup(app):
     @app.route('/api/upload', methods=['POST'])
     def upload():
         # data = request.get_json()
+>>>>>>> 56ef03b054e28f84c6d7d26306f4a1c4e262e822
         if 'file' not in request.files:
             abort(400, description='no file uploaded')
         
         file = request.files['file']
+<<<<<<< HEAD
+        if file.filename == '':
+            abort(400, description='file name is empty')
+        if not bool(re.search(file.filename, '(\.jpg)$|(\.jpeg)$|(\.png)$')):
+            abort(400, description='file is not an png or jpg')
+        file_metadata = {
+            'name': file.filename,
+            'parents': [os.environ.get('folder_id')]
+        }
+        file_id = None
+
+        try:
+            media = MediaFileUpload(file, mimetype='image/', resumable=True)
+            file_upload = (
+                service.files()
+                .create(body=file_metadata, media_body=media, fields="id")
+                .execute()
+            )
+            print(f'File with ID: "{file.get("id")}" has been uploaded.')
+            file_id = file.get("id")
+        except HttpError as error:
+            print(f"An error occurred: {error}")
+            file = None
+            abort(500, description=error)
+
+        try:
+            cursor = db.get_cursor()
+            patient_id = cursor.execute("SELECT id FROM patients WHERE name = ?", [data.form['name']])
+            cursor.execute('INSERT INTO (patient_id, image_id, image_name) VALUES (?, ?, ?, ?)', [patient_id, file_id, file.filename])
+        except sqlite3.Error as er:
+            abort(500, description=er)
+
+        
+=======
         name = request.form.get('name', 'unknown')
         if file.filename == '':
             print("no file")
@@ -139,6 +227,7 @@ def predict(path):
             label = "No Finding"
 
         return label
+>>>>>>> 56ef03b054e28f84c6d7d26306f4a1c4e262e822
 
     # @app.route('/api/get-images')
     # @app.route('/api/get-doctor')
