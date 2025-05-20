@@ -129,11 +129,10 @@ def predict(path):
         img_array = np.expand_dims(img_array, axis=0)
 
         # Predict
-        prediction = model.predict(img_array)[0][0]
-        print(prediction)
+        prediction = model.predict(img_array)
         label = ""
 
-        if prediction > .0000112:
+        if prediction[1] > prediction[0]:
             label = "PNEUMONIA detected" 
         else:
             label = "No Finding"
