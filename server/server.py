@@ -2,15 +2,18 @@ from flask import Flask
 from routes import setup
 import tempfile
 from db import Database
+from routes import setup
 import os
+from flask_cors import CORS
 from flask import Flask, request, jsonify, abort, Response
-# from keras.api.models import load_model
-# from keras.api.preprocessing import image
-import numpy as np
 from routes import predict
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 db = Database()
+
+setup(app)
+
 
 @app.route("/predict", methods=["POST"])
 def predict_route():

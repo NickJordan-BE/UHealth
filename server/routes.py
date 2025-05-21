@@ -5,6 +5,7 @@ import sqlite3
 import os
 import firebase_admin
 import uuid
+import json
 from firebase_admin import credentials, storage
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
@@ -13,7 +14,10 @@ import os
 from PIL import Image as PILImage
 
 def setup(app):
-    cred = credentials.Certificate('../firebase-cred.json')
+    firebase_id = json.loads(
+        os.environ['FIREBASE_CREDENTIALS']
+    );
+    cred = credentials.Certificate(firebase_id)
     firebase_admin.initialize_app(cred, {
         'storageBucket': os.environ['FIREBASE_BUCKET']
     })
