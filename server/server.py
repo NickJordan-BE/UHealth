@@ -1,21 +1,12 @@
 from flask import Flask
 from routes import setup
-from db import db
 import tempfile
-import firebase_admin.storage
 from db import Database
+import os
 from flask import Flask, request, jsonify, abort, Response
-import sqlite3
-import os
-import re
-import firebase_admin
-import uuid
-from firebase_admin import credentials, storage
-from keras.api.models import load_model
-from keras.api.preprocessing import image
+# from keras.api.models import load_model
+# from keras.api.preprocessing import image
 import numpy as np
-import os
-from PIL import Image as PILImage
 from routes import predict
 
 app = Flask(__name__)
@@ -37,4 +28,4 @@ def predict_route():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=os.environ['SERVER_PORT'])

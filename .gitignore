@@ -1,4 +1,5 @@
 hack-env
+.env
 bin/
 etc/
 include/

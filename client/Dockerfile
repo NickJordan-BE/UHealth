@@ -7,4 +7,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["flask", "run", "--host=0.0.0.0", "--port=4000"]
+CMD ["streamlit", "run", "streamlit_app.py", "--server.port=5173", "--server.address=0.0.0.0"]
