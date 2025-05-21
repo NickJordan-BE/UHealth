@@ -1,6 +1,6 @@
 import tempfile
 from db import Database
-from flask import Flask, request, jsonify, abort, Response
+from flask import request, jsonify, abort
 import sqlite3
 import os
 import firebase_admin
@@ -10,8 +10,6 @@ from firebase_admin import credentials, storage
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 import numpy as np
-import os
-from PIL import Image as PILImage
 
 def setup(app):
     firebase_id = json.loads(
