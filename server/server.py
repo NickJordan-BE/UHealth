@@ -1,21 +1,7 @@
 from flask import Flask
-from routes import setup
-from db import db
 import tempfile
-import firebase_admin.storage
 from db import Database
-from flask import Flask, request, jsonify, abort, Response
-import sqlite3
-import os
-import re
-import firebase_admin
-import uuid
-from firebase_admin import credentials, storage
-from keras.api.models import load_model
-from keras.api.preprocessing import image
-import numpy as np
-import os
-from PIL import Image as PILImage
+from flask import Flask, request, jsonify, abort
 from routes import predict
 
 app = Flask(__name__)

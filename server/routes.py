@@ -1,18 +1,13 @@
 import tempfile
-import firebase_admin.storage
 from db import Database
-from flask import Flask, request, jsonify, abort, Response
+from flask import request, jsonify, abort
 import sqlite3
-import os
-import re
 import firebase_admin
 import uuid
 from firebase_admin import credentials, storage
 from keras.api.models import load_model
 from keras.api.preprocessing import image
 import numpy as np
-import os
-from PIL import Image as PILImage
 
 def setup(app):
     cred = credentials.Certificate('../firebase-cred.json')
