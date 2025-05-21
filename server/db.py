@@ -26,27 +26,52 @@ class Database:
 
     def _init_db(self):
         self.cursor.execute(
-            """CREATE TABLE IF NOT EXISTS doctor(
+            """
+            CREATE TABLE IF NOT EXISTS doctor(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT UNIQUE NOT NULL
-            )""")
+            )
+            """
+        )
 
         self.cursor.execute(
-            """CREATE TABLE IF NOT EXISTS patient(
+            """
+            CREATE TABLE IF NOT EXISTS patient(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
                 doctor_id INTEGER,
                 FOREIGN KEY (doctor_id) REFERENCES doctor(id) ON UPDATE CASCADE ON DELETE SET NULL
-            )""")
+            )
+            """
+        )
 
         self.cursor.execute(
-            """CREATE TABLE IF NOT EXISTS images(
+            """
+            CREATE TABLE IF NOT EXISTS images(
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 patient_id INTEGER,
                 path TEXT UNIQUE NOT NULL,
                 image_name TEXT NOT NULL,
                 FOREIGN KEY (patient_id) REFERENCES patient(id) ON UPDATE CASCADE ON DELETE SET NULL
-            )""")
+            )
+            """
+        )
+        
+        self.cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS diagnosis(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                image_id INTEGER NOT NULL,
+                image_path TEXT NOT NULL,
+                diagnosis_name TEXT NOT NULL,
+                patient_id INTEGER,
+                doctor_id INTEGER,
+                FOREIGN KEY (image_id) REFERENCES images(id) ON UPDATE CASCADE ON DELETE CASCADE,
+                FOREIGN KEY (patient_id) REFERENCES patient(id) ON UPDATE CASCADE ON DELETE SET NULL,
+                FOREIGN KEY (doctor_id) REFERENCES doctor(id) ON UPDATE CASCADE ON DELETE SET NULL
+            )
+            """
+        )
 
         self.connection.commit()
 

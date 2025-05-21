@@ -95,8 +95,6 @@ def setup(app):
         blob.upload_from_filename(tmp_path, content_type=file.content_type)
         blob.make_public()
 
-
-
         try:
             db = Database()
             cursor = db.get_cursor()
@@ -115,7 +113,133 @@ def setup(app):
             'message': f"File uploaded for {name}",
             'path': blob_path,
         })
+    
+    @app.route('/api/all-doctors', methods=['GET'])
+    def get_all_doctors():
+        try:
+            db = Database()
+            cursor = db.get_cursor()
+            cursor.execute('SELECT name FROM doctor')
+            doctors = cursor.fetchall() # returns in tuple format
 
+            if not doctors:
+                return jsonify({
+                    'message': 'No doctors in the database.'
+                }), 200
+
+            doctor_names = [doc[0] for doc in doctors]
+
+            return jsonify({
+                'doctors': doctor_names
+            }), 200
+
+        except sqlite3.Error as er:
+            abort(500, description=str(er))
+
+    @app.route('/api/all-patients', methods=['GET'])
+    def get_all_patients():
+        try:
+            db = Database()
+            cursor = db.get_cursor()
+            cursor.execute("""
+                SELECT patient.id, patient.name, doctor.name
+                FROM patient LEFT JOIN doctor ON patient.doctor_id = doctor.id
+            """)
+            rows = cursor.fetchall()
+            if not rows:
+                return jsonify({
+                    'message': 'No patients found.'
+                }), 200
+            patients = [{'id': row[0], 'name': row[1], 'doctor': row[2]} for row in rows]
+            return jsonify({
+                'patients': patients
+            }), 200
+        except sqlite3.Error as e:
+            abort(500, description=str(e))
+
+
+    @app.route('/api/patient/<int:patient_id>', methods=['GET'])
+    def get_patient(patient_id):
+        try:
+            db = Database()
+            cursor = db.get_cursor()
+            cursor.execute("""
+                SELECT patient.id, patient.name, doctor.name
+                FROM patient LEFT JOIN doctor ON patient.doctor_id = doctor.id
+                WHERE patient.id = ?
+            """, (patient_id,))
+            row = cursor.fetchone()
+            if not row:
+                return jsonify({
+                    'message': 'Patient not found.'
+                }), 404
+            return jsonify({
+                'id': row[0],
+                'name': row[1],
+                'doctor': row[2]
+            }), 200
+        except sqlite3.Error as e:
+            abort(500, description=str(e))
+
+
+    @app.route('/api/images/<int:patient_id>', methods=['GET'])
+    def get_images(patient_id):
+        try:
+            db = Database()
+            cursor = db.get_cursor()
+            cursor.execute("""
+                SELECT id, path, image_name
+                FROM images
+                WHERE patient_id = ?
+            """, (patient_id,))
+            rows = cursor.fetchall()
+            if not rows:
+                return jsonify({
+                    'message': 'No images found for this patient.'
+                }), 200
+            images = [{'id': row[0], 'path': row[1], 'image_name': row[2]} for row in rows]
+            return jsonify({
+                'images': images
+            }), 200
+        except sqlite3.Error as e:
+            abort(500, description=str(e))
+
+    @app.route('/api/diagnosis/<int:patient_id>', methods=['GET'])
+    def get_diagnosis(patient_id):
+        try:
+            db = Database()
+            cursor = db.get_cursor()
+
+            cursor.execute("""
+                SELECT d.id, d.diagnosis_name, d.image_path, doc.name as doctor_name
+                FROM diagnosis d
+                LEFT JOIN doctor doc ON d.doctor_id = doc.id
+                WHERE d.patient_id = ?
+            """, (patient_id,))
+
+            results = cursor.fetchall()
+            if not results:
+                return jsonify({
+                    'message': 'No diagnosis found for this patient.'
+                }), 404
+
+            diagnoses = []
+            for row in results:
+                diagnosis = {
+                    'diagnosis_id': row[0],
+                    'diagnosis_name': row[1],
+                    'image_path': row[2],
+                    'doctor_name': row[3]
+                }
+                diagnoses.append(diagnosis)
+
+            return jsonify({
+                'patient_id': patient_id,
+                'diagnoses': diagnoses
+            })
+
+        except sqlite3.Error as er:
+            abort(500, description=str(er))
 
 def predict(path):
         model = load_model("../health_cnn_model.h5")
@@ -131,17 +255,8 @@ def predict(path):
         label = ""
 
         if prediction[1] > prediction[0]:
-            label = "PNEUMONIA detected" 
+            label = "Pneumonia detected" 
         else:
-            label = "No Finding"
+            label = "No findings"
 
         return label
-
-    # @app.route('/api/get-images')
-    # @app.route('/api/get-doctor')
-    # @app.route('/api/get-all-doctors')
-    # @app.route('/api/get-diagnosis')
-    # @app.route('/api/get-patient')
-    # @app.route('/api/get-all-patients')
-    #     def get_all_patients():
-    #         print('hello')

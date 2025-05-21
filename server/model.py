@@ -2,8 +2,8 @@ import pandas as pd
 import tensorflow as tf
 import os
 import matplotlib.pyplot as plt
-from keras.api.models import Sequential
-from keras.api.layers import Conv2D, MaxPooling2D, Dense, Flatten, BatchNormalization, Dropout, Input
+from tensorflow.keras.api.models import Sequential
+from tensorflow.keras.api.layers import Conv2D, MaxPooling2D, Dense, Flatten, BatchNormalization, Dropout, Input
 
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 4
