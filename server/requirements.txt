@@ -18,3 +18,5 @@ boto3
 pandas
 matplotlib
 gunicorn
+sqlalchemy 
+psycopg2-binary

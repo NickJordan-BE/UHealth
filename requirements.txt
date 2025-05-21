@@ -2,7 +2,6 @@ Flask
 cors
 flask-cors
 python-dotenv
-requests
 tensorflow
 firebase-admin
 google-api-python-client 
@@ -17,7 +16,10 @@ google-auth-oauthlib
 boto3
 pandas
 matplotlib
+sqlalchemy 
+psycopg2-binary
 
 
 streamlit
+requests
 openai

@@ -1,23 +1,26 @@
-import tempfile
-from db import Database
 from flask import request, jsonify, abort
-import sqlite3
-import os
-import firebase_admin
-import uuid
-import json
 from firebase_admin import credentials, storage
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
+from dotenv import load_dotenv
+import db.db2
 import numpy as np
+import firebase_admin
+import os
+import tempfile
+import sqlite3
+import uuid
+import json
+
+load_dotenv()
 
 def setup(app):
     firebase_id = json.loads(
-        os.environ['FIREBASE_CREDENTIALS']
+        os.getenv('FIREBASE_CREDENTIALS')
     );
     cred = credentials.Certificate(firebase_id)
     firebase_admin.initialize_app(cred, {
-        'storageBucket': os.environ['FIREBASE_BUCKET']
+        'storageBucket': os.getenv('FIREBASE_BUCKET')
     })
 
     # Load your trained model

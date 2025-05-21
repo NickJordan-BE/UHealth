@@ -32,6 +32,8 @@ firebase-cred.json
 .env
 google-cred.json
 notes.md
+supabase/
+schema.sql
 
 *.h5
 pneumonia_model.h5
