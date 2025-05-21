@@ -2,17 +2,22 @@ import tempfile
 from db import Database
 from flask import request, jsonify, abort
 import sqlite3
+import os
 import firebase_admin
 import uuid
+import json
 from firebase_admin import credentials, storage
-from keras.api.models import load_model
-from keras.api.preprocessing import image
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
 import numpy as np
 
 def setup(app):
-    cred = credentials.Certificate('../firebase-cred.json')
+    firebase_id = json.loads(
+        os.environ['FIREBASE_CREDENTIALS']
+    );
+    cred = credentials.Certificate(firebase_id)
     firebase_admin.initialize_app(cred, {
-        'storageBucket': 'uhealth-56bbb.firebasestorage.app' 
+        'storageBucket': os.environ['FIREBASE_BUCKET']
     })
 
     # Load your trained model

@@ -1,11 +1,16 @@
-from flask import Flask
-import tempfile
+from flask import Flask, request, jsonify, abort, Response
+from flask_cors import CORS
+from routes import setup, predict
 from db import Database
-from flask import Flask, request, jsonify, abort
-from routes import predict
+import os
+import tempfile
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})
 db = Database()
+
+setup(app)
+
 
 @app.route("/predict", methods=["POST"])
 def predict_route():
@@ -23,4 +28,4 @@ def predict_route():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=os.environ['SERVER_PORT'])

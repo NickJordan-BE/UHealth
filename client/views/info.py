@@ -1,6 +1,7 @@
 import streamlit as st
 from PIL import Image
 import requests
+import os
 
 # Landing Page
 st.markdown(
@@ -39,6 +40,8 @@ st.markdown('<div class="logoTitle">UHealth</div>', unsafe_allow_html=True)
 st.markdown('<div class="title">X-Ray Diagnostic Tool</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Upload chest X-ray images to receive AI-generated diagnostic suggestions</div>', unsafe_allow_html=True)
 
+SERVER_URL = os.environ.get("SERVER_URL", "http://server:4000")
+
 # Patient name input
 patient_name = st.text_input("Enter Patient Name")
 
@@ -62,7 +65,7 @@ if uploaded_file is not None and patient_name.strip() != "":
         }
 
         try:
-            response = requests.post("http://127.0.0.1:5000/predict", data=data, files=files)
+            response = requests.post(f"{SERVER_URL}/predict", data=data, files=files)
             response.raise_for_status()  # Raises an error for 4xx/5xx responses
 
 

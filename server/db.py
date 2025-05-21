@@ -73,28 +73,6 @@ class Database:
             """
         )
 
-
-        self.cursor.execute("SELECT COUNT(*) FROM doctor")
-        if self.cursor.fetchone()[0] == 0:
-            dummy_doctors = ['Dr. House', 'Dr. Strange', 'Dr. Who', 'Dr. Watson', 'Dr. Doom']
-            for name in dummy_doctors:
-                self.cursor.execute("INSERT INTO doctor (name) VALUES (?)", (name,))
-
-        self.cursor.execute("SELECT COUNT(*) FROM patient")
-        if self.cursor.fetchone()[0] == 0:
-            dummy_patients = ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve']
-
-            # get all doctor ids
-            self.cursor.execute("SELECT id FROM doctor")
-            doctor_ids = [row[0] for row in self.cursor.fetchall()]
-
-            for i, name in enumerate(dummy_patients):
-                doctor_id = doctor_ids[i % len(doctor_ids)]  # one doctor per patient (for now)
-                self.cursor.execute(
-                    "INSERT INTO patient (name, doctor_id) VALUES (?, ?)",
-                    (name, doctor_id)
-                )
-
         self.connection.commit()
 
     def close(self):

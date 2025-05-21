@@ -1,26 +1,19 @@
-hack-env
 bin/
 etc/
 include/
 lib/
 share/
 pyvenv.cfg
+.DS_Store
 
 /images
 *.csv
 /chest_xray
 
 56ef03b054e28f84c6d7d26306f4a1c4e262e822
-firebase-cred.json
-.hack-env
-.env
-google-cred.json
-notes.md
-
 *.h5
 pneumonia_model.h5
 
-notes.md
 server/__pycache__/**
 server/database.db
 

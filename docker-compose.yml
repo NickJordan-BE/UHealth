@@ -1,29 +1,30 @@
 services:
   client:
     build:
-      context: ./
-      dockerfile: client/Dockerfile
+      context: ./client
+      dockerfile: Dockerfile
     ports:
-      - "5000:5000"
+      - "${CLIENT_PORT:-8501}:8501"
     depends_on:
-      server:
-        condition: service_started
+      - server
     volumes:
-      - ./client/src:/streamlit-app/src
+      - ./client:/app
     environment:
-      - PORT=5000
-      - ENV FLASK_ENV=development
-      - ENV FLASK_APP=app.py
+      - STREAMLIT_SERVER_PORT=8501
+      - SERVER_URL=${SERVER_URL}
 
   server:
     build:
-      context: ./
-      dockerfile: server/Dockerfile
+      context: ./server
+      dockerfile: Dockerfile
     ports:
-      - "4000:4000"
+      - "${SERVER_PORT:-4000}:4000"
     volumes:
-      - ./server:/server-app
+      - ./server:/app
     env_file:
       - .env
-    # environment:
-
+    environment:
+      - FLASK_RUN_PORT=4000
+      - FLASK_ENV=${FLASK_ENV}
+      - FLASK_APP=${FLASK_APP:-server.py}
+      - FIREBASE_BUCKET=${FIREBASE_BUCKET}

@@ -7,4 +7,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:$SERVER_PORT server:app"]
+EXPOSE 8501
+
+CMD ["streamlit", "run", "streamlit_app.py", "--server.address=0.0.0.0"]
