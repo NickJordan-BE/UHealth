@@ -31,4 +31,4 @@ def predict_route():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=os.getenv('SERVER_PORT'))
+    app.run(port=os.getenv('SERVER_PORT', default=5000))

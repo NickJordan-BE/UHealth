@@ -1,26 +1,62 @@
-from flask import request, jsonify, abort
+from flask import request, jsonify, abort, make_response
 from firebase_admin import credentials, storage
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 from dotenv import load_dotenv
-import db.db2
+from server.db.db_handlers import Database, handle_db_exceptions, auth
+from utils.token import create_access_token
+from enum import Enum
+import token
 import numpy as np
+import bcrypt
 import firebase_admin
 import os
 import tempfile
 import sqlite3
 import uuid
 import json
+import random
 
 load_dotenv()
 
+JWT_ACCESS_EXP = os.getenv('JWT_ACCESS_EXP')
+JWT_REFRESH_EXP = os.getenv('JWT_REFRESH_EXP')
+
+class FormErrors(Enum):
+    MISSING_EMAIL = ("Missing email", 400)
+    MISSING_PASSWORD = ("Missing password", 400)
+    LENGTH_PASSWORD = ("Length of password must be at least 8 characters", 400)
+    MISSING_USERNAME = ("Missing username", 400)
+    LENGTH_USERNAME = ("Length of username must be less than 8 characters", 400)
+    MISSING_FIRST_NAME = ("Missing first name", 400)
+    MISSING_LAST_NAME = ("Missing last name", 400)
+    
+    def __init__(self, message, status_code):
+        self.message = message
+        self.status_code = status_code
+
+
+def hash_password(password: str) -> str:
+    salt = bcrypt.gensalt(rounds=12)
+    password_bytes = password.encode('utf-8')
+    hashed = bcrypt.hashpw(password_bytes, salt)
+    return hashed.decode('utf-8')
+
 def setup(app):
+    FIREBASE_CRED = os.getenv('FIREBASE_CREDENTIALS')
+    if FIREBASE_CRED == None:
+        print('No FIREBASE_CREDENTIALS environment variable')
+        exit(1)
     firebase_id = json.loads(
-        os.getenv('FIREBASE_CREDENTIALS')
+        FIREBASE_CRED
     );
     cred = credentials.Certificate(firebase_id)
+    FIREBASE_BUCKET = os.getenv('FIREBASE_BUCKET')
+    if FIREBASE_BUCKET == None:
+        print('No FIREBASE_BUCKET environment variable')
+        exit(1)
     firebase_admin.initialize_app(cred, {
-        'storageBucket': os.getenv('FIREBASE_BUCKET')
+        'storageBucket': FIREBASE_BUCKET
     })
 
     # Load your trained model
@@ -30,49 +66,139 @@ def setup(app):
     def hello():
         return 'UHEALTH'
 
-    @app.route('/api/register', methods=['POST'])
-    def register():
-        data = request.get_json()
-        name = data.form['name']
-        if name == None:
-            abort(400)
-        username = data.form['username']
+    @app.route('/api/doctor-register', methods=['POST'])
+    @handle_db_exceptions
+    def doctor_register():
+        email = request.form.get('email')
+        if email == None:
+            return jsonify({'message': FormErrors.MISSING_EMAIL.message}), FormErrors.MISSING_EMAIL.status_code
+        password = request.form.get('password')
+        if password == None:
+            return jsonify({'message': FormErrors.MISSING_PASSWORD.message}), FormErrors.MISSING_PASSWORD.status_code
+        elif len(password) < 8:
+            return jsonify({'message': FormErrors.LENGTH_PASSWORD.message}), FormErrors.LENGTH_PASSWORD.status_code
+
+        password_hash = hash_password(password)
+        
+        first_name = request.form.get('first_name')
+        if first_name == None:
+            return jsonify({'message': FormErrors.MISSING_FIRST_NAME.message}), FormErrors.MISSING_FIRST_NAME.status_code
+        last_name = request.form.get('last_name')
+        if last_name == None:
+            return jsonify({'message': FormErrors.MISSING_LAST_NAME.message}), FormErrors.MISSING_LAST_NAME.status_code
+        username = request.form.get('username')
         if username == None:
-            abort(400)
-        try:
-            db = Database()
-            cursor = db.get_cursor()
-            cursor.execute('INSERT INTO doctor (name, username) VALUES (?, ?)', [name, username])
-        except sqlite3.Error as er:
-            abort(500, description=er)
-        return 200
+            return jsonify({'message': FormErrors.MISSING_USERNAME.message}), FormErrors.MISSING_USERNAME.status_code
+        elif len(username) > 20: 
+            return jsonify({'message': FormErrors.LENGTH_USERNAME.message}), FormErrors.LENGTH_USERNAME.status_code
+
+        user, refresh_token, exp_time = Database().create_doctor(username=username, email=email, password_hash=password_hash, first_name=first_name, last_name=last_name)
+
+        access_token = create_access_token(username=username)
+        res = make_response(jsonify({
+            'access_token': access_token,
+            'token_type': 'Bearer',
+            'expires_in': JWT_ACCESS_EXP,
+            'user': {
+                'username': username,
+                'role': 'patient'
+            }
+        }))
+        res.set_cookie('refresh-token', value=refresh_token, httponly=True, domain='Strict', secure=True, expires=exp_time, path='/refresh')
+        return res
+
+    
+    @app.route('/api/patient-register', methods=['POST'])
+    @handle_db_exceptions
+    def patient_register():
+        email = request.form.get('email')
+        if email == None:
+            return jsonify({'message': FormErrors.MISSING_EMAIL.message}), FormErrors.MISSING_EMAIL.status_code
+        password = request.form.get('password')
+        if password == None:
+            return jsonify({'message': FormErrors.MISSING_PASSWORD.message}), FormErrors.MISSING_PASSWORD.status_code
+        elif len(password) < 8:
+            return jsonify({'message': FormErrors.LENGTH_PASSWORD.message}), FormErrors.LENGTH_PASSWORD.status_code
+
+        password_hash = hash_password(password)
+        
+        first_name = request.form.get('first_name')
+        if first_name == None:
+            return jsonify({'message': FormErrors.MISSING_FIRST_NAME.message}), FormErrors.MISSING_FIRST_NAME.status_code
+        last_name = request.form.get('last_name')
+        if last_name == None:
+            return jsonify({'message': FormErrors.MISSING_LAST_NAME.message}), FormErrors.MISSING_LAST_NAME.status_code
+        username = request.form.get('username')
+        if username == None:
+            return jsonify({'message': FormErrors.MISSING_USERNAME.message}), FormErrors.MISSING_USERNAME.status_code
+        elif len(username) > 20: 
+            return jsonify({'message': FormErrors.LENGTH_USERNAME.message}), FormErrors.LENGTH_USERNAME.status_code
+
+        # TODO: replace with pickable doctor page in frontend -> convert public_id to id
+        doctors = Database().get_all_doctors()
+        rand = random.randrange(0, len(doctors)) 
+        doctor_id = doctors[rand].id
+
+        _, refresh_token, exp_time = Database().create_patient(username=username, email=email,
+                                                           password_hash=password_hash, first_name=first_name,
+                                                           last_name=last_name, doctor_id=doctor_id
+                                                           )
+
+        access_token = create_access_token(username=username)
+        res = make_response(jsonify({
+            'access_token': access_token,
+            'token_type': 'Bearer',
+            'expires_in': JWT_ACCESS_EXP,
+            'user': {
+                'username': username,
+                'role': 'patient'
+            }
+        }))
+        res.set_cookie('refresh-token', value=refresh_token, httponly=True, domain='127.0.0.1', samesite="Strict", secure=True, expires=exp_time, path='/refresh')
+        return res
         
     @app.route('/api/login', methods=['POST'])
+    @handle_db_exceptions
     def login():
-        data = request.get_json()
-        name = data.form['name']
-        if name ==  None:
-            abort(400)
-        username = data.form['username']
-        if username ==  None:
-            abort(400)
+        username = request.form.get('username')
+        if username == None:
+            return jsonify({'message': FormErrors.MISSING_EMAIL.message}), FormErrors.MISSING_EMAIL.status_code
+        password = request.form.get('password')
+        if password == None:
+            return jsonify({'message':FormErrors.MISSING_PASSWORD.message}), FormErrors.MISSING_PASSWORD.status_code
         
-        try:
-            db = Database()
-            cursor = db.get_cursor()
-            cursor.execute('SELECT COUNT(*) FROM doctors WHERE username = ?', [username])
-            count = cursor.fetchone()[0]
-            if count == 0:
-                abort(404, description="user does not exist")
-        except sqlite3.Error as er:
-            abort(500, description=er)
-        return 200
+        user, message, refresh_token, exp_time = Database().verify_login(username=username, password=password)
+        if message:
+            return jsonify({'message': message.message}), message.status_code
+        access_token = create_access_token(username=username)
+
+        res = make_response(jsonify({
+            'access_token': access_token,
+            'token_type': 'Bearer',
+            'expires_in': JWT_ACCESS_EXP,
+            'user': {
+                'username': user.username,
+                'role': user.role
+            }
+        }))
+        res.set_cookie('refresh-token', value=refresh_token, httponly=True, domain='127.0.0.1', samesite="Strict", secure=True, expires=exp_time, path='/refresh')
+        return res
+
+
+    @app.route('/api/refresh-token', methods=['POST'])
+    @handle_db_exceptions
+    def refresh_token():
+        refresh_token = request.cookies.get('refresh_token')
     
-#     @app.route('/api/logout', methods=['POST'])
-#     def logout():
-#         return 'Success', 200
+    
+    @app.route('/api/logout', methods=['POST'])
+    @auth
+    def logout():
+        return 'Success', 200
 
     @app.route('/api/upload', methods=['POST'])
+    @handle_db_exceptions
+    @auth
     def upload():
         # data = request.get_json()
         if 'file' not in request.files:
@@ -120,26 +246,10 @@ def setup(app):
         })
     
     @app.route('/api/all-doctors', methods=['GET'])
+    @handle_db_exceptions
     def get_all_doctors():
-        try:
-            db = Database()
-            cursor = db.get_cursor()
-            cursor.execute('SELECT name FROM doctor')
-            doctors = cursor.fetchall() # returns in tuple format
-
-            if not doctors:
-                return jsonify({
-                    'message': 'No doctors in the database.'
-                }), 200
-
-            doctor_names = [doc[0] for doc in doctors]
-
-            return jsonify({
-                'doctors': doctor_names
-            }), 200
-
-        except sqlite3.Error as er:
-            abort(500, description=str(er))
+        doctors = Database().get_all_doctors()
+        return make_response(jsonify({'doctors': doctors}), 200)
 
     @app.route('/api/all-patients', methods=['GET'])
     def get_all_patients():
@@ -161,7 +271,6 @@ def setup(app):
             }), 200
         except sqlite3.Error as e:
             abort(500, description=str(e))
-
 
     @app.route('/api/patient/<int:patient_id>', methods=['GET'])
     def get_patient(patient_id):
