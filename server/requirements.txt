@@ -20,3 +20,5 @@ matplotlib
 gunicorn
 sqlalchemy 
 psycopg2-binary
+scipy
+scikit-learn

@@ -1,21 +1,38 @@
 import tempfile
-from db import Database
-from flask import request, jsonify, abort
+import os
 import sqlite3
 import firebase_admin
 import uuid
+import numpy as np
 from firebase_admin import credentials, storage
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
 from dotenv import load_dotenv
-import db.db2
-import numpy as np
+from db import Database
+from flask import request, jsonify, abort, json
 
+def predict(path):
+        model = load_model("../health_cnn_model.h5")
+        img = image.load_img(path, target_size=(224, 224)) 
+
+        # Classes
+        classes = ["COVID19", "NORMAL", "PNEUMONIA", "TURBERCULOSIS"]
+
+        # Load and preprocess image
+        # img = image.load_img("/Users/njordan/Desktop/PersonalProject/UWTHackathon/server/temp.jpeg", target_size=(224, 224))  # match your training input
+        img_array = image.img_to_array(img) / 255.0
+        img_array = np.expand_dims(img_array, axis=0)
+
+        # Predict
+        output = model.predict(img_array)
+        prediction = classes[np.argmax(output, axis=1)]
+
+        return prediction
 
 def setup(app):
     firebase_id = json.loads(
         os.getenv('FIREBASE_CREDENTIALS')
-    );
+    )
     cred = credentials.Certificate(firebase_id)
     firebase_admin.initialize_app(cred, {
         'storageBucket': os.getenv('FIREBASE_BUCKET')
@@ -244,23 +261,16 @@ def setup(app):
         except sqlite3.Error as er:
             abort(500, description=str(er))
 
-def predict(path):
-        model = load_model("../health_cnn_model.h5")
-        img = image.load_img(path, target_size=(224, 224)) 
 
-        # Load and preprocess image
-        # img = image.load_img("/Users/njordan/Desktop/PersonalProject/UWTHackathon/server/temp.jpeg", target_size=(224, 224))  # match your training input
-        img_array = image.img_to_array(img) / 255.0
-        img_array = np.expand_dims(img_array, axis=0)
+        @app.route("/predict", methods=["POST"])
+        def predict_route():
+            if 'file' not in request.files:
+                abort(400, description='no file uploaded')
 
-        # Predict
-        prediction = model.predict(img_array)
-        prediction = model.predict(img_array)
-        label = ""
+            file = request.files['file']
+            ext = file.filename.rsplit('.', 1)[-1].lower()
 
-        if prediction[0] > prediction[1]:
-            label = "PNEUMONIA detected" 
-        else:
-            label = "No findings"
-
-        return label
+            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                file.save(tmp.name)
+                tmp_path = tmp.name
+            return jsonify({'prediction': predict(tmp_path)})

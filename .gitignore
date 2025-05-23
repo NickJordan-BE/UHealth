@@ -28,6 +28,7 @@ __pycache__/
 /chest_xray
 
 firebase-cred.json
+*hack-env
 .hack-env
 .env
 google-cred.json
@@ -41,3 +42,8 @@ pneumonia_model.h5
 __pycache__/
 *.py[cod]
 *$py.class
+
+*val
+*test
+*train
+*models_and_weights
