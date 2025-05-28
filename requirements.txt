@@ -18,6 +18,7 @@ pandas
 matplotlib
 sqlalchemy 
 psycopg2-binary
+apache-airflow
 
 
 streamlit
