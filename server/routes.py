@@ -10,9 +10,10 @@ from tensorflow.keras.preprocessing import image
 from dotenv import load_dotenv
 from db import Database
 from flask import request, jsonify, abort, json
+from utils.s3_utils import download_model_from_s3
 
 def predict(path):
-        model = load_model("../health_cnn_model.h5")
+        model = download_model_from_s3()
         img = image.load_img(path, target_size=(224, 224)) 
 
         # Classes
