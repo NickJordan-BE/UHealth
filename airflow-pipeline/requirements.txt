@@ -1,6 +1,5 @@
 apache-airflow
 boto3
-tensorflow
 pandas
 numpy
 joblib
